@@ -1,0 +1,351 @@
+---
+title: "Assignment2-EDA"
+author: "Sai Aditya Garlapati"
+date: "20 September 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(readxl)
+library(dplyr)
+library(cluster)
+
+#loading files required for Assignment 2 
+NFL=read.csv("C:/Users/Administrator/Documents/EDA/Assessment 2_Batch 4B/NFL Play by Play 2009-2017 (v4).csv")
+test=read.csv("C:/Users/Administrator/Documents/EDA/Assessment 2_Batch 4B/test.csv")
+train=read.csv("C:/Users/Administrator/Documents/EDA/Assessment 2_Batch 4B/train.csv")
+Titanic=read.csv("C:/Users/Administrator/Documents/EDA/Assessment 2_Batch 4B/Titanic.csv")
+```
+
+#Question-1 
+
+##1) What is the probability for someone age 35 with bmi of 32, to be diabetic?
+
+
+
+```{r }
+model_1=glm(type~age+bmi,data=train,family=binomial("logit"))
+
+age=c(35)
+
+bmi=c(32)
+
+
+model_age_and_bmi=data.frame(age,bmi)
+
+
+predict(model_1,model_age_and_bmi,type="response")
+```
+
+
+##2)  According to your model what is the probability that a woman in your sample is diabetic
+
+###   given age 55, a bmi 37, bp 68 and npreg of 2?
+
+```{r}
+
+
+model_2=glm(type~age+bmi+bp+npreg,data=train,family=binomial("logit"))
+
+age=c(55)
+
+bmi=c(37)
+
+bp=c(68)
+
+npreg=c(2)
+
+model_age_bmi_bp_npreg=data.frame(age,bmi,bp,npreg)
+
+predict(model_2,model_age_bmi_bp_npreg,type="response")
+
+
+```
+
+
+##3)  For a woman aged 35 and mother of 2 children, by how much does the probability of diabetes increase,
+
+##    if her bmi was 35 instead of 25 according to the model?
+
+```{r}
+
+model_3=glm(type~age+bmi+npreg,data=train,family=binomial("logit"))
+
+age=c(35)
+
+bmi=c(35)
+
+npreg=c(2)
+
+model_age_bmi_npreg=data.frame(age,bmi,npreg)
+
+predict_bmi_35=predict(model_3,model_age_bmi_npreg,type="response")
+
+predict_bmi_35
+
+
+age=c(35)
+
+bmi=c(25)
+
+npreg=c(2)
+
+model_age_bmi_npreg_changed=data.frame(age,bmi,npreg)
+
+predict_bmi_25=predict(model_3,model_age_bmi_npreg_changed,type="response")
+
+predict_bmi_25
+
+predict_bmi_35-predict_bmi_25
+
+# for bmi 35  : 0.3789903
+
+# for bmi 25  : 0.1771995
+
+# Difference  : 0.2017908
+
+```
+
+##4)       What is the accuracy of Models?
+
+```{r}
+
+
+
+
+test$Pred1 = predict(model_1, test[,c(5,7)], type="response")
+
+#test$Pred = round(test$Pred, 3)
+
+test_result1=as.factor(ifelse(test$Pred1>0.5,"Yes","No"))
+
+confusion1=table(test$type,test_result1)
+
+confusion1
+
+##     test_result1
+
+#         No Yes
+
+#     No  195  28
+
+#     Yes  67  42
+
+Accuracy=(195+42)/332
+
+Accuracy
+
+# Accuracy 0.7138554
+
+test$Pred2 = predict(model_2, test[,c(1,3,5,7)], type="response")
+
+#test$Pred = round(test$Pred, 3)
+
+test_result2=as.factor(ifelse(test$Pred2>0.5,"Yes","No"))
+
+confusion2=table(test$type,test_result2)
+
+confusion2
+
+#test_result2
+
+#     No Yes
+
+#No  197  26
+
+#Yes  67  42
+
+accu=(197+42)/332
+
+accu
+
+#Accuracy 0.7198795
+
+
+
+test$Pred3 = predict(model_3, test[,c(1,5,7)], type="response")
+
+#test$Pred = round(test$Pred, 3)
+
+test_result3=as.factor(ifelse(test$Pred3>0.5,"Yes","No"))
+
+confusion3=table(test$type,test_result3)
+
+confusion3
+
+
+
+#test_result3
+
+#     No Yes
+
+#No  193  30
+
+#Yes  67  42
+
+accur=(193+42)/332
+
+accur
+
+# Accuracy 0.7078313
+
+```
+
+#Question-2
+
+```{r}
+
+
+levels(Titanic$Sex)
+
+Titanic=select(Titanic,-c(PassengerId,Name,Ticket,Fare,Cabin))
+View(Titanic)
+
+
+Titanic$Sex=as.factor(Titanic$Sex)
+
+Titanic$Sex = ifelse(Titanic$Sex=="male",1,0)
+
+#male is 1,female 0
+
+Titanic$Age=as.integer(Titanic$Age)
+
+Titanic=select(Titanic,-c(Parch,Embarked))
+
+View(Titanic)
+
+#standardise the data
+sd_Titanic=scale(Titanic)
+View(sd_Titanic)
+
+Titanic3=as.data.frame(sd_Titanic)
+View(Titanic3)
+
+# setting the seed value
+set.seed(1234)
+
+# kmeans for 4 clusters
+model=kmeans(sd_Titanic,4,nstart = 20)
+model
+
+Sex=as.list(Titanic$Sex)
+Sex=unlist(Sex)
+
+Survived=as.list(Titanic$Survived)
+View(Survived)
+survived=unlist(Survived)
+
+# creating a contingency table
+T=table(Sex,survived,model$cluster)
+
+View(T)
+
+
+```
+
+##2)	Describe, in words, each of the clusters.
+
+```{r}
+# ANS) 
+# here sex(0) is female,sex(1) is male
+# here survived(0) is killed,survived(1) is survived
+# cluster 1:
+# In cluster 1 ,More number of male are killed than female
+# 7 female are survived
+# cluster 2:
+# In cluster 2,More number of both male and female are killed
+# No single female is survived
+# cluster 3:
+# In cluster 3,More number of people are survived (203)
+# 190 female are survived
+# cluster 4:
+# In cluster 4,this purely consists of male .
+# 86 male are killed and 41 are survived
+
+```
+
+##3)	Now, 4 clusters was an arbitrary choice. What seems like a reasonable number of clusters?
+
+```{r}
+
+# ANS) To know the reasonable number of clusters we need to plot the elbow graph,Then see the distortion
+# where it is similar and find the value and do n-1
+
+# Creating the clusters
+cluster=kmeans(Titanic3,4)
+cluster
+
+cluster$centers 
+
+cluster$tot.withinss
+
+#cluster 1 to 10
+cluster1=kmeans(Titanic3,1)
+cluster2=kmeans(Titanic3,2)
+cluster3=kmeans(Titanic3,3)
+cluster4=kmeans(Titanic3,4)
+cluster5=kmeans(Titanic3,5)
+cluster6=kmeans(Titanic3,6)
+cluster7=kmeans(Titanic3,7)
+cluster8=kmeans(Titanic3,8)
+cluster9=kmeans(Titanic3,9)
+cluster10=kmeans(Titanic3,10)
+
+y=c(cluster1$tot.withinss,cluster2$tot.withinss,cluster3$tot.withinss,
+    cluster4$tot.withinss,cluster5$tot.withinss,cluster6$tot.withinss,cluster7$tot.withinss,
+    cluster8$tot.withinss,cluster9$tot.withinss,cluster10$tot.withinss)
+x=c(1,2,3,4,5,6,7,8,9,10)
+
+plot(x,y,xlab="No of clusters",ylab="Distortion",type="b",col="Blue")
+
+# ANS)  We see a distortion in the graph from 6.
+# The reasonable number of clusters are 6
+
+```
+
+#Question-3
+
+##3a)	Get the number of missing data points per column.
+
+```{r}
+
+columncount=sapply(NFL, function(x) sum(is.na(x)))
+columncount= as.data.frame(columncount)
+
+columncount
+
+```
+
+##3b) Percent of data that is missing in terms of cells
+
+```{r}
+
+per = columncount %>% summarise(percentage =(sum(columncount)/(407688*102))*100)
+per
+```
+
+##3c)the number of rows after removing all the rows that contain a missing value
+
+```{r}
+
+numrow= na.omit(NFL)
+numrow
+```
+
+##3d) the number of columns after removing all columns with at least one missing values
+
+```{r}
+
+nflcol=columncount %>% filter(columncount==0)
+dim(nflcol)
+```
+
+##3e) 	Replace all missing value by the mean value of that column
+
+```{r warning=FALSE}
+
+NFL[] <- lapply(NFL, function(x) ifelse(is.na(x), mean(x, na.rm = TRUE), x))
+View(NFL)
+```
+

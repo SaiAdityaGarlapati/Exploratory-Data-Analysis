@@ -1,0 +1,54 @@
+---
+title: "Untitled"
+author: "Sai Aditya Garlapati"
+date: "3 September 2018"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+library(readxl)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(plotly)
+library(tidyr)
+library(gridExtra)
+
+setwd("C:/Users/Administrator/Documents/EDA/Assignment/data-society-global-terrorism-data/original")
+files <- list.files(path = "C:/Users/Administrator/Documents/EDA/Assignment/data-society-global-terrorism-data/original",pattern = ".csv")
+temp <- lapply(files, fread, sep=",")
+terrorist_data <- rbindlist( temp,fill=TRUE )
+```
+
+## R Markdown
+
+This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+## Slide with Bullets
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Slide with R Output
+```{r}
+
+q1_td=terrorist_data%>%group_by(iyear)%>%summarise(No_of_Terrorist_attacks=n())
+
+
+q1_ggplot=ggplot(q1_td,aes(x=iyear,y=No_of_Terrorist_attacks))+
+  geom_area(fill="light blue")+
+  geom_point(col="black",size=0.9)+
+  geom_text(size=3,fontface='bold',
+            aes(label = No_of_Terrorist_attacks),
+            position = position_dodge(width = .9), vjust = -0.25)
+
+renderPlotly(q1_ggplot)
+
+
+```
+
+

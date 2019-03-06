@@ -1,0 +1,89 @@
+---
+title: "HR Analytics - Case study"
+author: "Amit Choudhary"
+date: "8 August 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(purrr)
+library(e1071)
+library(miscset)
+hr = read.csv("E://Training data//PGDS- EDA//HR Analytics.csv")
+```
+
+# Summary of the data 
+
+Lets check if the data is clean or not
+
+```{r}
+summary(hr)
+```
+
+After looking into structure ,We can see that there are no NA'S and Some variables 
+such as Education,JobInvolvement..etc  which are factors are stored as integers ,
+so Converting these  continuos variables to Categorical data
+
+```{r}
+str(hr)
+```
+
+Converting the variable to factor
+
+```{r}
+names = c('Attrition','Education','EnvironmentSatisfaction','JobSatisfaction',
+           'RelationshipSatisfaction','WorkLifeBalance' ,'JobInvolvement')
+
+hr[,names] = lapply(hr[,names] , factor)
+
+str(hr)
+```
+
+## UNIVARIATE ANALYSIS: Visualizing Each Numeric data
+
+```{r}
+hr[1:25] %>%
+  keep(is.numeric) %>%
+  gather() %>%                             
+  ggplot(aes(x = value)) + geom_histogram(fill = "Red") +                  
+  facet_wrap(~ key, scales = "free")
+```
+
+## VISUALIZING EACH categorical data 
+
+```{r}
+# If you want the names of all factor column or numeric column
+
+hrcat = names(which(sapply(hr,is.factor)))
+hrnum = names(which(sapply(hr,is.numeric)))
+```
+
+# Lets visualize categorical variable
+
+```{r}
+
+ggplotGrid(ncol = 3,lapply(hrcat[1:5],function(x) {
+  ggplot(hr, aes_string(x)) + geom_bar(aes(fill = Attrition)) + theme_bw() +
+    theme(axis.text.x = element_text(size  = 10, angle = 90, hjust = 1, vjust = 1))})) 
+
+```
+
+Column 6 to 10
+
+```{r}
+ggplotGrid(ncol = 3,lapply(hrcat[6:10],function(x) {
+  ggplot(hr, aes_string(x)) + geom_bar(aes(fill = Attrition)) + theme_bw() +
+    theme(axis.text.x = element_text(size  = 10, angle = 45, hjust = 1, vjust = 1))}))
+```
+
+Column 11 to 13
+
+```{r}
+ggplotGrid(ncol = 3,lapply(hrcat[11:13],function(x) {
+  ggplot(hr, aes_string(x)) + geom_bar(aes(fill = Attrition)) + theme_bw() +
+    theme(axis.text.x = element_text(size  = 10, angle = 45, hjust = 1, vjust = 1))}))
+```
+

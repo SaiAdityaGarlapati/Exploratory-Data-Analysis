@@ -1,0 +1,355 @@
+---
+title: "Global Terrorism Dataset Assignment"
+author: "Sai Aditya Garlapati"
+date: "3 September 2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(readxl)
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(plotly)
+library(tidyr)
+library(gridExtra)
+
+setwd("C:/Users/Administrator/Documents/EDA/Assignment/data-society-global-terrorism-data/original")
+files <- list.files(path = "C:/Users/Administrator/Documents/EDA/Assignment/data-society-global-terrorism-data/original",pattern = ".csv")
+temp <- lapply(files, fread, sep=",")
+terrorist_data <- rbindlist( temp,fill=TRUE )
+
+knitr::opts_chunk$set(fig.width=9, fig.height=6,fig.align = "center") 
+
+```
+
+## Explanations for questions 1 and 2
+
+We have arranged both charts for 1 and 2 just because the explanation for both the queries becomes easy.
+
+As we can see that the number of terrorist attack are growing as the timeline goes forward.
+
+1.	A probable cause would be the advancement in technology and the development of new materials i.e. advancement in chemical warfare etc.
+
+2.	Second can be the advancement in media i.e. due to advancement in media.
+
+3.	Third can be political reasons. Example can be given of the Naxalites terror in the northern regions in India.
+
+4.	Socioeconomic causes like poverty is also influencing the terrorism to great extent.People with strong economic background are being targeted by the groups of people with lower economic background to acquire there wealth and technology.
+
+5.	Apart from these we can see that every terror attack Constitutes of bombings rather than any other means of terror attack like mass executions by gunning people, This is just because bombs are an efficient way to terrorise more people or rather a mass population.
+
+6.	Also, the bombs are nowadays more advanced and easily concealable, like the chemical bombs which can be easily made from normal chemicals.And there are nail bombs which can be mad from only a pressure cooker can you imagine.
+
+
+So, these were some probable causes for the increase in terror attacks and the increase in use of bombings as a terror device.
+
+
+```{r }
+q1_td=terrorist_data%>%group_by(iyear)%>%summarise(No_of_Terrorist_attacks=n())
+
+
+q1_ggplot=ggplot(q1_td,aes(x=iyear,y=No_of_Terrorist_attacks))+
+  geom_area(fill="light blue")+
+  geom_point(col="black",size=0.9)
+  
+
+ggplotly(q1_ggplot)
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r }
+q2_td=terrorist_data%>%
+  filter(attacktype1_txt=="Bombing/Explosion")%>%
+  group_by(iyear)%>%
+  summarise(no_of_terrorist_bombings=n())
+
+q2_ggplot=ggplot(q2_td,aes(x=iyear,y=no_of_terrorist_bombings))+
+  geom_area(fill="light green")+
+  geom_point(size=0.9)
+ 
+ggplotly(q2_ggplot)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+grid.arrange(q1_ggplot,q2_ggplot)
+
+```
+
+##question-3
+
+```{r}
+
+
+
+q3_td=terrorist_data%>%group_by(region_txt,iyear)%>%summarise(No_of_attacks_each_year=n())
+
+
+q3_ggplot=ggplot(q3_td,aes(x=iyear,y=No_of_attacks_each_year))+
+  geom_area(aes(fill = as.factor(region_txt)))+
+  theme_bw() + facet_wrap(~region_txt, scales="free_y",ncol=3)+
+  geom_point(col="black",size=0.9)+
+  theme(legend.position="none")+
+  theme(panel.spacing = unit(2, "lines"))
+
+ggplotly(q3_ggplot)
+  
+```
+
+##question-4
+```{r}
+
+q4_td=terrorist_data%>%group_by(region_txt,attacktype1_txt)%>%
+  summarise(No_of_attacks=n())%>%
+  top_n(5)
+
+
+q4_ggplot=ggplot(q4_td,aes(x=attacktype1_txt,y=No_of_attacks))+
+  geom_bar(stat = "Identity",width = .5, aes(fill = as.factor(attacktype1_txt)))+
+  theme_bw() + facet_wrap(~region_txt, scales="free",ncol=3)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())+
+  geom_text(size=3,fontface='bold',
+            aes(label = No_of_attacks),
+            position = position_dodge(width = .9), vjust = -0.25)
+  theme(legend.position="bottom")+
+  theme(panel.spacing = unit(3, "lines"))
+
+
+q4_ggplot
+```
+##Question-5
+1)	Terrorist main target is seen to be to do maximum damage to private citizen and properties.   
+2)	Inferring from the graph Wounds and killed in Police are high as they are first responders to any terrorist attacks and they are responsible for law and order at the ground level so this make them in direct line of attack from terrorists
+
+3)	Similarly Government Military forces work mostly in warzones resulting in higher casualties
+
+```{r}
+
+q5_td=terrorist_data%>%
+  group_by(targtype1_txt)%>%summarise(maximum_kills=sum(nkill,na.rm = TRUE),maximum_wounded=sum(nwound,na.rm = TRUE))
+
+
+
+q5_ggplot=q5_td%>%gather(-targtype1_txt,key="var",value="value")%>%
+  ggplot(aes(x=targtype1_txt,y=value))+
+  geom_bar(stat = "Identity",aes(fill=as.factor(targtype1_txt))) +
+  facet_wrap(~ var, scales = "free") +
+  theme_bw()+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())+
+  theme(panel.spacing = unit(3, "lines"))
+
+ggplotly(q5_ggplot)
+
+```
+## Question-6
+
+1)	Total number of terrorist attack over 45 years in Pakistan and India are approximately equal
+
+2)	Till 2006, average number of total terrorist attacks in India is higher than that of Pakistan, After 2006, total number of attacks and number of casualties have increased drastically in Pakistan and significantly higher than India
+
+3)	We can contribute to higher attacks in India Pre 2006 mainly due to combination of Naxal related attacks, NE insurgency, Kashmir attacks and other internal problems
+
+4)	After 2006, there is multi-fold increase in number of attacks in Pakistan which is mainly attributed to blow back from 'War on Terror' in Afghanistan and Pakistan     
+
+
+```{r}
+q6_td=terrorist_data%>%filter(iyear!=1970)%>%
+  filter(country_txt=="India" | country_txt=="Pakistan")%>%
+  group_by(iyear,country_txt)%>%summarise(No_of_Attacks=n())
+
+q6_ggplot=ggplot(q6_td,aes(x=iyear,y=No_of_Attacks))+
+  geom_area(aes(fill=as.factor(country_txt)))+
+  theme_bw() + facet_wrap(~country_txt,scales = "free")+
+  theme(panel.spacing = unit(3, "lines"))
+
+ggplotly(q6_ggplot)
+
+
+```
+
+##Question 7
+
+After the breaking of USSR among smaller countries the number of terror attacks in the region increased significantly. United States faced worst attacks till 9/11 and after that the intensity and number of attacks fell down drastically which resulted in influx of terror attack in many other regions of Russian Federation 
+
+```{r}
+q7_td=terrorist_data%>%filter(iyear!=1970)%>%
+  filter(country_txt=="Russia"| country_txt=="Soviet Union" | country_txt=="United States")%>%
+  group_by(iyear,country_txt)%>%
+  summarise(No_of_Attacks=n())
+
+
+q7_ggplot=ggplot(q7_td,aes(x=iyear,y=No_of_Attacks))+
+  geom_density(alpha=0.25,stat = "Identity",width = .5,aes(fill=as.factor(country_txt)))+
+  theme_bw() + facet_wrap(~country_txt,scales = "free")
+
+q7_ggplot
+
+```
+##Question 7 graph 2
+```{r}
+
+
+q7_ggplot2=ggplot(q7_td,aes(x=iyear,y=No_of_Attacks))+
+  geom_bar(stat = "Identity",width = .5,aes(fill=as.factor(country_txt)))+
+  theme_bw()
+
+q7_ggplot2
+
+```
+
+##Question 8
+
+Most of the casualties are in the middle east region because of the growing in house terror groups and number of attempts to destabilize the region particularly by US and its allies. It is due to the continued failed effort of United Nations to stop these from making the region unstable and war-torn. In other regions namely - Afghanistan and Pakistan this is the one of the reason 
+
+```{r}
+
+q8_select=terrorist_data%>%select(country_txt,nkill)
+
+q8_td=q8_select%>%filter(!is.na(country_txt),country_txt!=".")%>%
+  group_by(country_txt)%>%summarise(maximum_kills=sum(nkill,na.rm = TRUE))%>%
+  arrange(-maximum_kills)%>%
+  head(10)
+
+
+q8_ggplot=ggplot(q8_td,aes(x=country_txt,y=maximum_kills))+
+  geom_bar(stat="Identity",width=0.5,aes(fill=as.factor(country_txt)))+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+q8_ggplot
+
+```
+##Question 9
+
+```{r}
+
+q9_td=terrorist_data%>%
+  filter(!is.na(nkill))%>%
+  group_by(iyear,attacktype1_txt)%>%
+  summarise(no_of_casualities=sum(nkill))
+
+
+ggplot(q9_td,aes(x=iyear,y=no_of_casualities))+
+  geom_bar(stat="identity",aes(fill=as.factor(attacktype1_txt)))
+
+```
+Question 9 plot 2
+```{r}
+
+ggplot(q9_td,aes(x=iyear,y=no_of_casualities))+geom_bar(stat="identity",aes(fill=as.factor(attacktype1_txt)),position = "fill")
+
+
+```
+
+Question 9 plot 3
+```{r}
+
+ggplot(q9_td,aes(x=iyear,y=no_of_casualities))+geom_line(stat="identity",aes(col=as.factor(attacktype1_txt)),size=1)
+
+```
+
+##Question 10
+```{r}
+
+q10_select=terrorist_data%>%select(iyear,weaptype1_txt,nkill)
+
+q10_td=q10_select%>%
+  group_by(weaptype1_txt)%>%
+  summarise(Total_Kills=sum(nkill,na.rm = TRUE))%>%
+  arrange(-Total_Kills)
+
+q10_head6=q10_td%>%head(6)
+
+q10_tail6=q10_td%>%tail(6)
+
+a10=ggplot(q10_head6,aes(x=weaptype1_txt,y=Total_Kills))+
+  geom_bar(stat="identity",aes(fill=as.factor(weaptype1_txt)))+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())+
+  theme(legend.position="bottom")
+
+b10=ggplot(q10_tail6,aes(x=weaptype1_txt,y=Total_Kills))+
+  geom_bar(stat="identity",aes(fill=as.factor(weaptype1_txt)))+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())+
+  theme(legend.position="bottom")
+
+grid.arrange(a10,b10)
+
+```
+##Question 11
+```{r}
+q11_select=terrorist_data%>%select(iyear,natlty1_txt,nkill)
+
+
+
+q11_td=q11_select%>%
+  group_by(natlty1_txt)%>%
+  summarise(Total_Kills=sum(nkill,na.rm = TRUE))%>%
+  arrange(-Total_Kills)%>%head(10)
+
+
+q11=ggplot(q11_td,aes(x=natlty1_txt,y=Total_Kills))+
+  geom_bar(stat="identity",aes(fill=as.factor(natlty1_txt)))+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+ggplotly(q11)
+
+```
+
+##Question 12
+```{r}
+q12_basic=terrorist_data%>%
+  group_by(country_txt)%>%
+  filter(doubtterr==0)%>% 
+  summarise(safest_countries=sum(nkill==0,na.rm = TRUE))%>%
+  arrange(-safest_countries)%>%head(15)
+
+q12_basic_ggplot=ggplot(q12_basic,aes(x=country_txt,y=safest_countries))+
+  geom_bar(stat = "Identity",width = .9, aes(fill = as.factor(country_txt)))+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+ggplotly(q12_basic_ggplot)
+
+
+```
+##question 12 plot 2
+```{r}
+q12=terrorist_data%>%
+  group_by(attacktype1_txt,country_txt)%>%
+  filter(doubtterr==0)%>% 
+  summarise(safest_countries=sum(nkill==0,na.rm = TRUE))%>%
+  top_n(5)
+  
+
+q12_ggplot=ggplot(q12,aes(x=country_txt,y=safest_countries))+
+  geom_bar(stat = "Identity",width = .5, aes(fill = as.factor(country_txt)))+
+  theme_bw() + facet_wrap(~attacktype1_txt, scales="free",ncol=3)+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())+
+  theme(panel.spacing = unit(3, "lines"))
+
+ggplotly(q12_ggplot)
+
+```
+

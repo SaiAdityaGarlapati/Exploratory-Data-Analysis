@@ -1,0 +1,164 @@
+---
+title: "HR Analytics - Case study"
+author: "Amit Choudhary"
+date: "8 August 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(moments)
+library(psych)
+hr = read.csv("C:/Users/Administrator/Documents/Exploratory Data Analysis/HR analytics.csv")
+```
+
+# Summary of the data 
+
+Lets check if the data is clean or not
+
+```{r}
+summary(hr)
+```
+
+# 1.	What proportion of our staff are leaving?
+
+```{r}
+t = round(prop.table(table(hr$Department, hr$Attrition)),2)
+
+t = as.data.frame.matrix(t)
+
+colnames(t) = c("Currently working", "Left the company")
+
+t
+```
+
+# 2.	Where is it occurring?
+
+```{r}
+ggplot(hr, aes(x = as.factor(Attrition))) + geom_bar(width = .5, aes(fill = as.factor(Attrition))) + scale_fill_manual(breaks = c("0", "1"), values=c("green", "red")) + theme_bw() + facet_grid(Gender~MaritalStatus)
+```
+
+# 3.	How does Age and Relationship Satisfaction affect termination?
+
+```{r}
+ggplot(hr, aes(x=Age, fill = as.factor(Attrition))) + geom_histogram(bins = 30) + theme_bw() +
+  scale_fill_manual(breaks = c("0", "1"), values=c("green", "red"))
+```
+#How is Relationship satisfaction affecting the attrition??
+
+It actually isn't affecting much. All the categories in the relationship satisfaction have almost same count more or less
+
+```{r}
+ggplot(hr, aes(x=RelationshipSatisfaction, fill = as.factor(Attrition))) + geom_histogram(bins = 4) + theme_bw()+scale_fill_manual(breaks = c("0", "1"), values=c("blue", "red"))
+
+```
+
+#How is Education affecting the attrition?
+
+```{r}
+ggplot(hr, aes(x = as.factor(Attrition))) + geom_bar(width = .5, aes(fill = as.factor(Attrition)))+ scale_fill_manual(breaks = c("0", "1"), values=c("orange", "red")) + theme_bw() + facet_grid(~Education)
+```
+###practice questions
+
+```{r}
+#1.	What is the average age of the employees in each department excluding the outliers?
+
+
+ggplot(hr,aes(Department,Age))+geom_boxplot(aes(fill=as.factor(Department)),outlier.color = 'Red',outlier.size = 2)
+
+```
+
+```{r}
+#2.	Which education field has the highest attrition rate for the employees with less than 5 years of work experience and monthly salary between 2000 and 4000 USD.
+hr%>%filter(TotalWorkingYears<5, MonthlyIncome >2000,MonthlyIncome<4000)%>%
+  group_by(EducationField)%>%
+  summarise(percent_attrition=sum(Attrition)/n())
+
+```
+
+```{r}
+#3.	What is the average salary hike for the employees with work experience between 8 years to 10 years
+
+hr%>%filter(TotalWorkingYears>=8,TotalWorkingYears<=10)%>%
+  summarise(avg_salary_hike=mean(PercentSalaryHike*MonthlyIncome/100,na.rm = TRUE))
+```
+```{r}
+#4.	Is the "number of companies worked" normally distributed for the employees with work experience between 8 years and 10 years.
+
+ggplot(hr,aes(NumCompaniesWorked))+geom_histogram()
+```
+```{r}
+#hr employee salary and work experience
+ggplot(hr,aes(TotalWorkingYears,MonthlyIncome))+geom_jitter(aes(col=as.factor(Attrition)))
+
+```
+
+```{r}
+ggplot(hr,aes(TotalWorkingYears,MonthlyIncome))+geom_jitter(aes(col=as.factor(Attrition)))
+
+ggplot(hr,aes(MonthlyIncome,PercentSalaryHike))+geom_jitter(aes(col=as.factor(Attrition)))
+```
+```{r}
+library(purrr)
+
+f=c("Education","EnvironmentSatisfaction","JobInvolvement","JobSatisfaction","PerformanceRating","Attrition","RelationshipSatisfaction","WorkLifeBalance","EmployeeNumber")
+
+hr[,f]=lapply(hr[,f], factor)
+
+t=hr[1:25]%>%
+  keep(is.numeric)
+k=  cor(t)
+
+corrplot(k,method="square",type="upper",order="hclust")
+
+t
+
+library(corrplot)
+
+
+```
+
+```{r}
+#education field and salary
+ds1=hr%>%group_by(EducationField)%>%summarise(Avg_Salary=mean(MonthlyIncome))
+ds1
+ggplot(ds1,aes(x=reorder(EducationField,-Avg_Salary),Avg_Salary))+ geom_bar(stat="Identity",aes(fill=as.factor(EducationField)))
+
+
+ggplot(ds1,aes(x=reorder(EducationField,-Avg_Salary),Avg_Salary))+
+  geom_point(size=5)+
+  geom_segment(aes(x=EducationField,xend=EducationField,y=0,yend=Avg_Salary))
+
+
+```
+
+```{r}
+#take a categorical column and consider all numerical columns and get p value for annova and give an oput in the form of a data frame.
+
+```
+####Question 4:4.	Is the "number of companies worked" normally distributed for the employees with work experience between 8 years and 10 years.
+```{r}
+subset=hr%>%filter(TotalWorkingYears>=8 , TotalWorkingYears<=10)
+
+skewness(subset$NumCompaniesWorked,na.rm = TRUE)
+kew(subset$NumCompaniesWorked,na.rm = TRUE)
+```
+
+
+
+
+###5.	Divided the whole data into two groups - Group1: people with monthly salary more than the average salary of all employees and people with monthly salary less than the average salary of all employees. For each group analysis the attrition rate in each Job Role. Find the Job role which has the highest attrition rate gap across the group
+
+```{r}
+meansalary=mean(hr$MonthlyIncome)
+g1=hr%>%filter(MonthlyIncome>meansalary)%>%
+  group_by(JobRole)%>%
+  summarise(AttritionRate=sum(Attrition)/n()*100)%>%View
+
+g2=hr%>%filter(MonthlyIncome<meansalary)%>%
+  group_by(JobRole)%>%
+  summarise(AttritionRate=sum(Attrition)/n()*100)%>%View
+```
+
